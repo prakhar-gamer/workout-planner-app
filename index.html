@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* Apply Inter font globally */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Black background */
+            color: #f8fafc; /* Default text white (slate-50) */
+            scroll-behavior: smooth;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e; /* Darker gray */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ef4444; /* Red-500 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #dc2626; /* Red-600 */
+        }
+
+        /* Selected muscle group button style */
+        .muscle-group-btn.selected {
+            background-color: #ef4444; /* Red-500 */
+            color: #ffffff;
+            border-color: #ef4444; /* Red-500 */
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); /* Red glow */
+        }
+
+        /* Workout card hover effect */
+        .workout-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: 1px solid #333; /* Dark border */
+        }
+        .workout-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2); /* Subtle red shadow on hover */
+        }
+
+        /* Set tracker styles */
+        .set-tracker {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #6b7280; /* Gray-500 border */
+            border-radius: 50%; /* Circle */
+            cursor: pointer;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .set-tracker.completed {
+            background-color: #ef4444; /* Red-500 background */
+            border-color: #ef4444; /* Red-500 border */
+        }
+
+        /* Animation for checkmark inside completed tracker */
+        .set-tracker.completed .checkmark {
+            display: inline-block;
+            color: white;
+            font-size: 14px;
+            transform: scale(0);
+            animation: checkmark-pop 0.3s ease-out forwards;
+        }
+
+        .set-tracker .checkmark {
+             display: none; /* Hide checkmark initially */
+        }
+
+        @keyframes checkmark-pop {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Button Styles */
+        .primary-btn {
+            background-color: #ef4444; /* Red-500 */
+            color: white;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .primary-btn:hover:not(:disabled) {
+            background-color: #dc2626; /* Red-600 */
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+        }
+        .primary-btn:disabled {
+             opacity: 0.5;
+             cursor: not-allowed;
+        }
+
+        .secondary-btn {
+             background-color: #1f2937; /* Gray-800 */
+             color: #e5e7eb; /* Gray-200 */
+             border: 1px solid #4b5563; /* Gray-600 */
+             font-weight: 500;
+             padding: 8px 20px;
+             border-radius: 8px;
+             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+         .secondary-btn:hover {
+             background-color: #374151; /* Gray-700 */
+             border-color: #6b7280; /* Gray-500 */
+             color: white;
+         }
+         /* Canvas for confetti */
+         #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+         }
+         /* Removed Login Overlay Styles */
+
+    </style>
+</head>
+<body class="bg-black text-slate-50 min-h-screen p-4 md:p-6">
+    <canvas id="confetti-canvas"></canvas>
+
+    <div id="app-content" class="max-w-4xl mx-auto">
+
+        <nav class="flex justify-between items-center mb-8 py-3 border-b border-gray-700">
+            <div class="text-2xl font-extrabold tracking-tight">
+                <span class="text-red-500">Power</span><span class="text-white">Log</span> <i class="fa-solid fa-bolt text-red-500 ml-1"></i>
+            </div>
+            <div>
+                <button class="text-gray-400 hover:text-white transition duration-150">
+                    <i class="fas fa-user-circle text-2xl"></i>
+                </button>
+            </div>
+        </nav>
+
+        <header class="mb-10 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-white">Your Daily Workout</h1>
+            <p class="text-gray-400 mt-2 text-lg">Select a muscle group and generate your session.</p>
+        </header>
+
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold mb-5 text-center text-gray-300">1. Focus Area</h2>
+            <div id="muscle-group-selector" class="flex flex-wrap justify-center gap-3 md:gap-4">
+                <button data-muscle="Chest" class="muscle-group-btn secondary-btn">
+                    <i class="fas fa-user-ninja mr-2 opacity-80"></i>Chest
+                </button>
+                <button data-muscle="Back" class="muscle-group-btn secondary-btn">
+                    <i class="fas fa-user-ninja mr-2 opacity-80"></i>Back
+                </button>
+                <button data-muscle="Legs" class="muscle-group-btn secondary-btn">
+                    <i class="fas fa-person-running mr-2 opacity-80"></i>Legs
+                </button>
+                <button data-muscle="Shoulders" class="muscle-group-btn secondary-btn">
+                    <i class="fas fa-dumbbell mr-2 opacity-80"></i>Shoulders
+                </button>
+                 <button data-muscle="Arms" class="muscle-group-btn secondary-btn">
+                    <i class="fas fa-dumbbell mr-2 opacity-80"></i>Arms
+                </button>
+                 <button data-muscle="Core" class="muscle-group-btn secondary-btn">
+                    <i class="fas fa-child mr-2 opacity-80"></i>Core
+                </button>
+            </div>
+            <p id="selection-error" class="text-red-500 text-center mt-3 text-sm hidden">Please select a focus area first.</p>
+        </section>
+
+        <section class="mb-10 text-center">
+             <h2 class="text-xl font-semibold mb-5 text-center text-gray-300">2. Generate Session</h2>
+            <button id="generate-btn" class="primary-btn">
+                <i class="fas fa-cogs mr-2"></i>Generate Today's Workout
+            </button>
+        </section>
+
+        <section id="workout-display" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-center text-white">Workout: <span id="workout-title" class="text-red-500">...</span></h2>
+            <div id="workout-list" class="space-y-5">
+                <div class="text-center text-gray-500 italic">Select a focus area and click "Generate" to see suggested exercises.</div>
+            </div>
+             <div class="mt-8 text-center">
+                 <button id="finish-btn" class="primary-btn" disabled>
+                     <i class="fas fa-check-circle mr-2"></i>Finish Workout
+                 </button>
+                 <p id="finish-message" class="text-green-400 mt-3 text-sm hidden">Workout Complete! Great job!</p>
+             </div>
+        </section>
+
+    </div><script>
+        // --- Removed Password Constant ---
+
+        // --- DOM Elements (Get them directly) ---
+        const appContent = document.getElementById('app-content'); // Main container for the app
+        const muscleGroupSelector = document.getElementById('muscle-group-selector');
+        const muscleGroupButtons = muscleGroupSelector.querySelectorAll('.muscle-group-btn');
+        const generateBtn = document.getElementById('generate-btn');
+        const workoutDisplay = document.getElementById('workout-display');
+        const workoutTitle = document.getElementById('workout-title');
+        const workoutList = document.getElementById('workout-list');
+        const selectionError = document.getElementById('selection-error');
+        const finishBtn = document.getElementById('finish-btn');
+        const finishMessage = document.getElementById('finish-message');
+        const confettiCanvas = document.getElementById('confetti-canvas');
+
+        // --- Confetti Instance ---
+        const myConfetti = confetti.create(confettiCanvas, {
+            resize: true,
+            useWorker: true
+        });
+
+        // --- State ---
+        let selectedMuscleGroup = null;
+        let totalSets = 0;
+        let completedSets = 0;
+
+        // --- DATA ---
+        const exercises = {
+             Chest: [
+                { name: "Barbell Bench Press", sets: 3, reps: "8-12", icon: "fa-dumbbell" },
+                { name: "Incline Dumbbell Press", sets: 3, reps: "10-15", icon: "fa-dumbbell" },
+                { name: "Dumbbell Flyes", sets: 2, reps: "12-15", icon: "fa-dumbbell" },
+                { name: "Push-ups", sets: 3, reps: "AMRAP", icon: "fa-person-running" },
+            ],
+            Back: [
+                { name: "Pull-ups / Lat Pulldowns", sets: 3, reps: "6-10", icon: "fa-person-hiking" },
+                { name: "Barbell Rows", sets: 3, reps: "8-12", icon: "fa-dumbbell" },
+                { name: "Seated Cable Rows", sets: 3, reps: "10-15", icon: "fa-gear" },
+                { name: "Face Pulls", sets: 2, reps: "15-20", icon: "fa-gear" },
+            ],
+            Legs: [
+                { name: "Barbell Squats", sets: 4, reps: "8-12", icon: "fa-dumbbell" },
+                { name: "Romanian Deadlifts", sets: 3, reps: "10-15", icon: "fa-dumbbell" },
+                { name: "Leg Press", sets: 3, reps: "12-15", icon: "fa-person-running" },
+                { name: "Hamstring Curls", sets: 3, reps: "12-15", icon: "fa-person-running" },
+                { name: "Calf Raises", sets: 4, reps: "15-25", icon: "fa-person-running" },
+            ],
+            Shoulders: [
+                { name: "Overhead Press (Barbell)", sets: 3, reps: "8-12", icon: "fa-dumbbell" },
+                { name: "Lateral Raises", sets: 3, reps: "12-15", icon: "fa-dumbbell" },
+                { name: "Front Raises", sets: 2, reps: "12-15", icon: "fa-dumbbell" },
+                { name: "Reverse Pec Deck", sets: 3, reps: "15-20", icon: "fa-gear" },
+            ],
+             Arms: [
+                { name: "Bicep Curls (Dumbbell)", sets: 3, reps: "10-15", icon: "fa-dumbbell" },
+                { name: "Hammer Curls", sets: 3, reps: "10-15", icon: "fa-dumbbell" },
+                { name: "Triceps Pushdowns (Cable)", sets: 3, reps: "12-15", icon: "fa-gear" },
+                { name: "Overhead Triceps Ext.", sets: 3, reps: "12-15", icon: "fa-dumbbell" },
+                { name: "Skullcrushers", sets: 2, reps: "10-12", icon: "fa-dumbbell" },
+            ],
+             Core: [
+                { name: "Crunches", sets: 3, reps: "15-25", icon: "fa-child-reaching" },
+                { name: "Leg Raises", sets: 3, reps: "15-25", icon: "fa-child-reaching" },
+                { name: "Plank", sets: 3, reps: "Hold 30-60s", icon: "fa-person" },
+                { name: "Russian Twists", sets: 3, reps: "15-20 / side", icon: "fa-child-reaching" },
+            ]
+        };
+
+        // --- Functions ---
+
+        // Function to update the "Finish Workout" button state
+        function updateFinishButtonState() {
+            if (totalSets > 0 && completedSets === totalSets) {
+                finishBtn.disabled = false;
+            } else {
+                finishBtn.disabled = true;
+                finishMessage.classList.add('hidden'); // Hide message if not all sets are done
+            }
+        }
+
+        // Function to handle set tracker clicks
+        function handleSetClick(event) {
+            const tracker = event.currentTarget;
+            const isCompleted = tracker.classList.toggle('completed');
+
+            if (isCompleted) {
+                completedSets++;
+            } else {
+                completedSets--;
+            }
+            updateFinishButtonState();
+        }
+
+        // Function to display the workout
+        function displayWorkout(muscleGroup) {
+            const workoutPlan = exercises[muscleGroup];
+            workoutTitle.textContent = muscleGroup;
+            workoutList.innerHTML = '';
+            totalSets = 0;
+            completedSets = 0;
+
+            if (!workoutPlan || workoutPlan.length === 0) {
+                workoutList.innerHTML = '<p class="text-center text-gray-500">No exercises defined for this group yet.</p>';
+                 updateFinishButtonState();
+                return;
+            }
+
+            workoutPlan.forEach(exercise => {
+                totalSets += exercise.sets;
+
+                const card = document.createElement('div');
+                card.className = 'workout-card bg-gray-900 p-5 rounded-lg shadow-lg border border-gray-700 flex flex-col sm:flex-row sm:items-center sm:space-x-5';
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'flex items-center space-x-4 flex-grow mb-4 sm:mb-0';
+                const iconElement = document.createElement('i');
+                iconElement.className = `fas ${exercise.icon || 'fa-dumbbell'} text-red-500 text-3xl w-10 text-center flex-shrink-0`;
+                const textDiv = document.createElement('div');
+                const nameElement = document.createElement('h3');
+                nameElement.className = 'text-lg font-semibold text-white';
+                nameElement.textContent = exercise.name;
+                const setsRepsElement = document.createElement('p');
+                setsRepsElement.className = 'text-sm text-gray-400';
+                setsRepsElement.textContent = `Sets: ${exercise.sets} | Reps: ${exercise.reps}`;
+                textDiv.appendChild(nameElement);
+                textDiv.appendChild(setsRepsElement);
+                infoDiv.appendChild(iconElement);
+                infoDiv.appendChild(textDiv);
+
+                const trackersDiv = document.createElement('div');
+                trackersDiv.className = 'flex items-center justify-start sm:justify-end space-x-2 flex-shrink-0';
+                for (let i = 0; i < exercise.sets; i++) {
+                    const tracker = document.createElement('span');
+                    tracker.className = 'set-tracker';
+                    tracker.title = `Mark Set ${i + 1} Complete`;
+                    const checkmark = document.createElement('i');
+                    checkmark.className = 'fas fa-check checkmark';
+                    tracker.appendChild(checkmark);
+                    tracker.addEventListener('click', handleSetClick);
+                    trackersDiv.appendChild(tracker);
+                }
+
+                card.appendChild(infoDiv);
+                card.appendChild(trackersDiv);
+                workoutList.appendChild(card);
+            });
+
+            workoutDisplay.classList.remove('hidden');
+            updateFinishButtonState();
+             finishMessage.classList.add('hidden');
+        }
+
+        // --- Event Listeners (Attached directly) ---
+
+        // Handle muscle group button clicks
+        muscleGroupButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                muscleGroupButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                selectedMuscleGroup = button.getAttribute('data-muscle');
+                selectionError.classList.add('hidden');
+                workoutDisplay.classList.add('hidden'); // Hide old workout when selecting new group
+                finishMessage.classList.add('hidden');
+            });
+        });
+
+        // Handle "Generate Workout" button click
+        generateBtn.addEventListener('click', () => {
+            if (selectedMuscleGroup) {
+                selectionError.classList.add('hidden');
+                displayWorkout(selectedMuscleGroup);
+                workoutDisplay.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                selectionError.classList.remove('hidden');
+                workoutDisplay.classList.add('hidden');
+                finishMessage.classList.add('hidden');
+            }
+        });
+
+         // Handle "Finish Workout" button click
+        finishBtn.addEventListener('click', (event) => {
+            if (!finishBtn.disabled) {
+                 finishMessage.classList.remove('hidden');
+
+                 // Trigger Confetti
+                 const rect = event.target.getBoundingClientRect();
+                 const originX = rect.left + rect.width / 2;
+                 const originY = rect.top + rect.height / 2;
+
+                 myConfetti({
+                    particleCount: 150,
+                    spread: 90,
+                    origin: {
+                        x: originX / window.innerWidth,
+                        y: originY / window.innerHeight
+                    },
+                    colors: ['#ef4444', '#ffffff', '#dc2626', '#f8fafc', '#fca5a5']
+                 });
+
+                 console.log("Workout Finished! Data to save:", selectedMuscleGroup, exercises[selectedMuscleGroup]);
+                 // finishBtn.disabled = true; // Optional: disable after finish
+            }
+        });
+
+        // --- Initial State ---
+        // App content is now visible by default
+        muscleGroupButtons.forEach(btn => btn.classList.remove('selected'));
+        workoutDisplay.classList.add('hidden'); // Keep workout hidden until generated
+        updateFinishButtonState(); // Set initial button state
+
+    </script>
+
+</body>
+</html>
