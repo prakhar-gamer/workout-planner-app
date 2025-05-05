@@ -133,7 +133,6 @@
             pointer-events: none;
             z-index: 9999;
          }
-         /* Removed Login Overlay Styles */
 
     </style>
 </head>
@@ -204,10 +203,8 @@
         </section>
 
     </div><script>
-        // --- Removed Password Constant ---
-
         // --- DOM Elements (Get them directly) ---
-        const appContent = document.getElementById('app-content'); // Main container for the app
+        const appContent = document.getElementById('app-content');
         const muscleGroupSelector = document.getElementById('muscle-group-selector');
         const muscleGroupButtons = muscleGroupSelector.querySelectorAll('.muscle-group-btn');
         const generateBtn = document.getElementById('generate-btn');
@@ -230,45 +227,49 @@
         let totalSets = 0;
         let completedSets = 0;
 
-        // --- DATA ---
+        // --- DATA (Hypertrophy Focused) ---
+        // These are sample templates. Real optimization needs individualization.
+        // Rep ranges are typical for hypertrophy, aim for 1-3 reps short of failure (RPE 7-9).
         const exercises = {
              Chest: [
-                { name: "Barbell Bench Press", sets: 3, reps: "8-12", icon: "fa-dumbbell" },
-                { name: "Incline Dumbbell Press", sets: 3, reps: "10-15", icon: "fa-dumbbell" },
-                { name: "Dumbbell Flyes", sets: 2, reps: "12-15", icon: "fa-dumbbell" },
-                { name: "Push-ups", sets: 3, reps: "AMRAP", icon: "fa-person-running" },
+                { name: "Barbell Bench Press", sets: 3, reps: "6-10", icon: "fa-dumbbell" }, // Compound focus
+                { name: "Incline Dumbbell Press", sets: 3, reps: "8-12", icon: "fa-dumbbell" }, // Upper chest focus
+                { name: "Dumbbell Flyes / Cable Crossovers", sets: 3, reps: "10-15", icon: "fa-dumbbell" }, // Isolation/Stretch
+                { name: "Dips (Chest Focused) / Push-ups", sets: 3, reps: "8-15", icon: "fa-person-running" } // Bodyweight/Compound Finisher
             ],
             Back: [
-                { name: "Pull-ups / Lat Pulldowns", sets: 3, reps: "6-10", icon: "fa-person-hiking" },
-                { name: "Barbell Rows", sets: 3, reps: "8-12", icon: "fa-dumbbell" },
-                { name: "Seated Cable Rows", sets: 3, reps: "10-15", icon: "fa-gear" },
-                { name: "Face Pulls", sets: 2, reps: "15-20", icon: "fa-gear" },
+                { name: "Pull-ups / Lat Pulldowns", sets: 3, reps: "6-12", icon: "fa-person-hiking" }, // Vertical Pull Compound
+                { name: "Barbell Rows / Dumbbell Rows", sets: 3, reps: "8-12", icon: "fa-dumbbell" }, // Horizontal Pull Compound
+                { name: "Seated Cable Rows", sets: 3, reps: "10-15", icon: "fa-gear" }, // Horizontal Pull Variation
+                { name: "Face Pulls / Reverse Flyes", sets: 3, reps: "12-20", icon: "fa-gear" } // Rear Delts/Upper Back
             ],
             Legs: [
-                { name: "Barbell Squats", sets: 4, reps: "8-12", icon: "fa-dumbbell" },
-                { name: "Romanian Deadlifts", sets: 3, reps: "10-15", icon: "fa-dumbbell" },
-                { name: "Leg Press", sets: 3, reps: "12-15", icon: "fa-person-running" },
-                { name: "Hamstring Curls", sets: 3, reps: "12-15", icon: "fa-person-running" },
-                { name: "Calf Raises", sets: 4, reps: "15-25", icon: "fa-person-running" },
+                { name: "Barbell Squats", sets: 4, reps: "6-10", icon: "fa-dumbbell" }, // Primary Compound
+                { name: "Romanian Deadlifts / Stiff-Leg Deadlifts", sets: 3, reps: "8-12", icon: "fa-dumbbell" }, // Hamstring/Glute Compound
+                { name: "Leg Press", sets: 3, reps: "10-15", icon: "fa-person-running" }, // Quad Focused Volume
+                { name: "Leg Extensions", sets: 3, reps: "12-15", icon: "fa-person-running" }, // Quad Isolation
+                { name: "Hamstring Curls (Lying or Seated)", sets: 3, reps: "10-15", icon: "fa-person-running" }, // Hamstring Isolation
+                { name: "Calf Raises (Standing or Seated)", sets: 4, reps: "10-20", icon: "fa-person-running" } // Calves
             ],
             Shoulders: [
-                { name: "Overhead Press (Barbell)", sets: 3, reps: "8-12", icon: "fa-dumbbell" },
-                { name: "Lateral Raises", sets: 3, reps: "12-15", icon: "fa-dumbbell" },
-                { name: "Front Raises", sets: 2, reps: "12-15", icon: "fa-dumbbell" },
-                { name: "Reverse Pec Deck", sets: 3, reps: "15-20", icon: "fa-gear" },
+                { name: "Overhead Press (Barbell/Dumbbell)", sets: 3, reps: "6-10", icon: "fa-dumbbell" }, // Primary Compound Press
+                { name: "Lateral Raises (Dumbbell/Cable)", sets: 4, reps: "10-15", icon: "fa-dumbbell" }, // Medial Delt Focus (more volume)
+                { name: "Front Raises (Dumbbell/Cable)", sets: 2, reps: "10-15", icon: "fa-dumbbell" }, // Anterior Delt (often hit with pressing)
+                { name: "Reverse Pec Deck / Rear Delt Flyes", sets: 3, reps: "12-20", icon: "fa-gear" } // Posterior Delt Focus
             ],
              Arms: [
-                { name: "Bicep Curls (Dumbbell)", sets: 3, reps: "10-15", icon: "fa-dumbbell" },
-                { name: "Hammer Curls", sets: 3, reps: "10-15", icon: "fa-dumbbell" },
-                { name: "Triceps Pushdowns (Cable)", sets: 3, reps: "12-15", icon: "fa-gear" },
-                { name: "Overhead Triceps Ext.", sets: 3, reps: "12-15", icon: "fa-dumbbell" },
-                { name: "Skullcrushers", sets: 2, reps: "10-12", icon: "fa-dumbbell" },
+                { name: "Barbell Curls / EZ Bar Curls", sets: 3, reps: "8-12", icon: "fa-dumbbell" }, // Bicep Compound
+                { name: "Incline Dumbbell Curls", sets: 3, reps: "10-15", icon: "fa-dumbbell" }, // Bicep Stretch Focus
+                { name: "Hammer Curls / Rope Hammer Curls", sets: 3, reps: "10-15", icon: "fa-dumbbell" }, // Brachialis/Forearm
+                { name: "Close-Grip Bench Press / Dips", sets: 3, reps: "8-12", icon: "fa-dumbbell" }, // Tricep Compound
+                { name: "Overhead Triceps Extension (DB/Cable)", sets: 3, reps: "10-15", icon: "fa-dumbbell" }, // Tricep Long Head Stretch
+                { name: "Triceps Pushdowns (Rope/Bar)", sets: 3, reps: "10-15", icon: "fa-gear" } // Tricep Volume/Isolation
             ],
-             Core: [
-                { name: "Crunches", sets: 3, reps: "15-25", icon: "fa-child-reaching" },
-                { name: "Leg Raises", sets: 3, reps: "15-25", icon: "fa-child-reaching" },
-                { name: "Plank", sets: 3, reps: "Hold 30-60s", icon: "fa-person" },
-                { name: "Russian Twists", sets: 3, reps: "15-20 / side", icon: "fa-child-reaching" },
+             Core: [ // Core can be trained more frequently, often with higher reps or timed holds
+                { name: "Cable Crunches / Weighted Crunches", sets: 3, reps: "10-20", icon: "fa-child-reaching" }, // Weighted Abs
+                { name: "Hanging Leg Raises / Captain's Chair Raises", sets: 3, reps: "10-20", icon: "fa-child-reaching" }, // Lower Abs Focus
+                { name: "Plank / Side Plank", sets: 3, reps: "Hold 30-90s", icon: "fa-person" }, // Stability
+                { name: "Russian Twists / Wood Choppers", sets: 3, reps: "10-15 / side", icon: "fa-child-reaching" } // Rotational
             ]
         };
 
@@ -418,3 +419,6 @@
 
 </body>
 </html>
+```
+
+I've updated the `exercises` object within the script tag with selections and set/rep schemes generally aligned with hypertrophy training principl
